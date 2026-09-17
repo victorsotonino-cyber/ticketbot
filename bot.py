@@ -1,159 +1,96 @@
 import discord
 from discord.ext import commands
-import os
-import asyncio
 
+# Configuración del bot
 intents = discord.Intents.default()
 intents.message_content = True
-intents.guilds = True
-intents.members = True
-
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# IDs configurados
-ROLE_TO_TAG = 1451204772672831564
-
-# --- VISTA DENTRO DEL TICKET (Reclamar y Cerrar) ---
-class TicketActionView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="Reclamar", style=discord.ButtonStyle.primary, emoji="<:aprobado_cherrybox:1488944560775102544>")
-    async def claim_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.manage_channels:
-            return await interaction.response.send_message("❌ No tienes permisos para reclamar tickets.", ephemeral=True)
-        
-        button.disabled = True
-        button.label = f"Reclamado por {interaction.user.name}"
-        await interaction.message.edit(view=self)
-        await interaction.response.send_message(f"✅ Este ticket ha sido reclamado por {interaction.user.mention}.")
-
-    @discord.ui.button(label="Cerrar Ticket", style=discord.ButtonStyle.danger, emoji="<:viperfinder_viperfinde_558:1489283055746027760>")
-    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("🔒 Cerrando este canal de ticket en 5 segundos...")
-        await asyncio.sleep(5)
-        await interaction.channel.delete()
-
-# --- MENÚ DESPLEGABLE DEL PANEL ---
-class TicketSelect(discord.ui.Select):
-    def __init__(self):
-        options = [<:emoji_9:1550144328540618882
-            discord.SelectOption(label="Soporte", description="Abre ticket para resolver tus dudas o preguntas.", emoji= <:emoji_9:1550144328540618882>"
-            discord.SelectOption(label="Comprar", description="Abre ticket para comprar algún producto de la tienda.", emoji="<:emoji_11:1550144504990801930>"),
-            discord.SelectOption(label="Reclamar", description="Abre ticket para solicitar tu recompensa.", emoji="<:emoji_20:1550146329915949077>"),
-            discord.SelectOption(label="Quejas", description="Abre ticket para reportar un problema o queja.", emoji="<:emoji_10:1550144465765793792>"),
-            discord.SelectOption(label="Media", description="Abre ticket para solicitar el rol Team Media.", emoji="<:Crown:1488947497278902312>"),
-            discord.SelectOption(label="Postulacion", description="Abre ticket para postularte a staff.", emoji="<:emoji_14:1550144666618302525>")
-        ]
-        super().__init__(placeholder="Selecciona el tipo de ticket...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        ticket_type = self.values[0]
-        guild = interaction.guild
-        
-        # Canal suelto sin categoría fija para evitar errores
-        category = None
-
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            interaction.user: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
-            guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True)
-        }
-
-        channel_name = f"ticket-{ticket_type.lower()}-{interaction.user.name}"
-        ticket_channel = await guild.create_text_channel(name=channel_name, category=category, overwrites=overwrites)
-
-        embed_ticket = discord.Embed(
-            title=f"<:Crown:1488947497278902312> Ticket de {ticket_type}",
-            description=f"Hola {interaction.user.mention}, bienvenido a tu ticket.\n\n> <@&{ROLE_TO_TAG}> Un miembro del staff te atenderá en breve. Por favor detalla tu duda o problema.",
-            color=discord.Color.green()
-        )
-
-        await ticket_channel.send(content=f"<@&{ROLE_TO_TAG}> {interaction.user.mention}", embed=embed_ticket, view=TicketActionView())
-        await interaction.response.send_message(f"¡Ticket creado con éxito! Ve a {ticket_channel.mention}", ephemeral=True)
+# Nuevos emojis personalizados
+EMOJI_SOPORTE = "<:emoji_11:1550144504990801930>"
+EMOJI_TIENDA = "<:emoji_20:1550146329915949077>"
+EMOJI_REPORTE = "<:emoji_10:1550144465765793792>"
+EMOJI_REGALO = "<:emoji_14:1550144666618302525>"
+EMOJI_MANTENIMIENTO = "<:emoji_9:1550144328540618882>"
+EMOJI_VIPERFINDER = "<:emoji_12:1550144549412802631>"
 
 class TicketView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)
-        self.add_item(TicketSelect())
+        super().__init__(timeout=None) # El panel no expira
+
+    # Fila 1 de botones
+    @discord.ui.button(label="Soporte", style=discord.ButtonStyle.secondary, emoji=EMOJI_SOPORTE, custom_id="ticket_soporte", row=0)
+    async def soporte_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.crear_ticket(interaction, "soporte")
+
+    @discord.ui.button(label="Tienda", style=discord.ButtonStyle.secondary, emoji=EMOJI_TIENDA, custom_id="ticket_tienda", row=0)
+    async def tienda_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.crear_ticket(interaction, "tienda")
+
+    @discord.ui.button(label="Reporte", style=discord.ButtonStyle.secondary, emoji=EMOJI_REPORTE, custom_id="ticket_reporte", row=0)
+    async def reporte_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.crear_ticket(interaction, "reporte")
+
+    # Fila 2 de botones
+    @discord.ui.button(label="Mantenimiento", style=discord.ButtonStyle.secondary, emoji=EMOJI_MANTENIMIENTO, custom_id="ticket_mantenimiento", row=1)
+    async def mantenimiento_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.crear_ticket(interaction, "mantenimiento")
+
+    # Fila 3 de botones
+    @discord.ui.button(label="Regalo", style=discord.ButtonStyle.secondary, emoji=EMOJI_REGALO, custom_id="ticket_regalo", row=2)
+    async def regalo_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.crear_ticket(interaction, "regalo")
+
+    @discord.ui.button(label="Viperfinder", style=discord.ButtonStyle.secondary, emoji=EMOJI_VIPERFINDER, custom_id="ticket_viperfinder", row=2)
+    async def viperfinder_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.crear_ticket(interaction, "viperfinder")
+
+    async def crear_ticket(self, interaction: discord.Interaction, tipo: str):
+        await interaction.response.send_message(f"¡Has creado un ticket de **{tipo}** con éxito!", ephemeral=True)
 
 @bot.event
 async def on_ready():
-    print(f"Bot conectado como {bot.user}")
+    print(f'Bot conectado correctamente como {bot.user}')
 
-# --- COMANDO PARA ENVIAR EL PANEL ---
-@bot.command()
+@bot.command(name="panel")
 @commands.has_permissions(administrator=True)
 async def panel(ctx):
+    # Crear el Embed con los nuevos emojis
     embed = discord.Embed(
-        title="<:Crown:1488947497278902312> 「 Centro de Soporte 」 <:Crown:1488947497278902312>",
+        title="Lunar Market — Crear un Ticket",
         description=(
-            "<:boost_cherry:1488944553497989334> **Usa los apartados según lo que necesites:**\n\n"
-            "▫️ Para **comprar un artículo**, selecciona en el menú 💲\n"
-            "▫️ Para **recibir tu recompensa**, selecciona <:emoji_20:1550146329915949077>\n"
-            "▫️ Para **soporte / dudas**, selecciona <:emoji_9:1550144328540618882>\n"
-            "▫️ Para **postularte**, selecciona  <:emoji_11:1550144504990801930>\n\n"
-            "<:emoji_14:1550144666618302525> **Normas:**\n"
-            "• El mal uso de este sistema será motivo de **sanción inmediata**.\n"
-            "• Los tickets deben abrirse **solo por motivos válidos**.\n\n"
-            "> `Recuerda ser claro y respetuoso en tu mensaje.`"
+            f"{EMOJI_SOPORTE} **soporte** — Ayuda general con compras, problemas técnicos o preguntas sobre la tienda.\n"
+            f"{EMOJI_TIENDA} **tienda** — Consultas relacionadas con productos, pagos, envíos o inventario.\n"
+            f"{EMOJI_REPORTE} **reporte** — Reportes de usuarios, fraudes o comportamientos inapropiados.\n"
+            f"{EMOJI_REGALO} **regalo** — Consultas sobre cajas/regalos.\n"
+            f"{EMOJI_MANTENIMIENTO} **mantenimiento** — Avisos o dudas sobre mantenimientos.\n"
+            f"{EMOJI_VIPERFINDER} **viperfinder** — Soporte para ViperFinder / herramientas relacionadas.\n\n"
+            "Pulsa el botón correspondiente para crear un ticket."
         ),
-        color=discord.Color.dark_green()
+        color=discord.Color.from_rgb(114, 137, 218)
     )
-    embed.set_footer(text="Sistema de Tickets Oficial")
+
     await ctx.send(embed=embed, view=TicketView())
 
-
-# ==========================================
-# --- COMANDOS DE MODERACIÓN Y SORTEOS (!) ---
-# ==========================================
-
-@bot.command()
-@commands.has_permissions(kick_members=True)
-async def kick(ctx, member: discord.Member, *, reason="Sin razón especificada"):
-    await member.kick(reason=reason)
-    await ctx.send(f"<:aprobado_cherrybox:1488944560775102544> El usuario **{member.name}** ha sido expulsado correctamente. Razón: *{reason}*")
-
-@bot.command()
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, member: discord.Member, *, reason="Sin razón especificada"):
-    await member.ban(reason=reason)
-    await ctx.send(f"<:aprobado_cherrybox:1488944560775102544> El usuario **{member.name}** ha sido baneado correctamente. Razón: *{reason}*")
-
-@bot.command()
-@commands.has_permissions(manage_messages=True)
-async def clear(ctx, amount: int):
-    await ctx.channel.purge(limit=amount + 1)
-    msg = await ctx.send(f"<:aprobado_cherrybox:1488944560775102544> Se han borrado **{amount}** mensajes.")
-    await asyncio.sleep(3)
-    await msg.delete()
-
-@bot.command()
-@commands.has_permissions(manage_roles=True)
-async def mute(ctx, member: discord.Member):
-    role = discord.utils.get(ctx.guild.roles, name="Muted")
-    if not role:
-        try:
-            role = await ctx.guild.create_role(name="Muted", reason="Para sistema de muteos")
-            for channel in ctx.guild.channels:
-                await channel.set_permissions(role, send_messages=False, speak=False)
-        except Exception:
-            return await ctx.send("❌ No se pudo crear el rol 'Muted' automáticamente.")
-    
-    await member.add_roles(role)
-    await ctx.send(f"<:aprobado_cherrybox:1488944560775102544> El usuario **{member.name}** ha sido silenciado.")
-
-@bot.command()
-@commands.has_permissions(manage_guild=True)
-async def sorteo(ctx, *, premio: str):
-    embed = discord.Embed(
-        title="<:regalo_cherrybox:1488944546510409911> ¡NUEVO SORTEO! <:regalo_cherrybox:1488944546510409911>",
-        description=f"Premio: **{premio}**\n\nReacciona con <:regalo_cherrybox:1488944546510409911> para participar.",
-        color=discord.Color.gold()
+@bot.command(name="ayuda")
+async def ayuda(ctx):
+    embed_ayuda = discord.Embed(
+        title="📖 Guía de Comandos del Bot",
+        description="Aquí tienes la lista de comandos disponibles para administrar y usar el bot:",
+        color=discord.Color.green()
     )
-    embed.set_footer(text=f"Sorteo organizado por {ctx.author.name}")
-    
-    msg = await ctx.send(embed=embed)
-    await msg.add_reaction("<:regalo_cherrybox:1488944546510409911>")
+    embed_ayuda.add_field(
+        name="!panel",
+        value="Envía el panel oficial de creación de tickets con todos los botones interactivos. *(Requiere permisos de Administrador)*",
+        inline=False
+    )
+    embed_ayuda.add_field(
+        name="!ayuda",
+        value="Muestra este mensaje con la lista de comandos del bot.",
+        inline=False
+    )
+    await ctx.send(embed=embed_ayuda)
 
-bot.run(os.getenv("DISCORD_TOKEN"))
+# Reemplaza 'TU_TOKEN_DE_DISCORD' con el token real de tu bot
+bot.run('TU_TOKEN_DE_DISCORD')
+        
