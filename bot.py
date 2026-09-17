@@ -37,13 +37,13 @@ class TicketActionView(discord.ui.View):
 # --- MENÚ DESPLEGABLE DEL PANEL ---
 class TicketSelect(discord.ui.Select):
     def __init__(self):
-        options = [
-            discord.SelectOption(label="Soporte", description="Abre ticket para resolver tus dudas o preguntas.", emoji="<:md_mantenimiento:1489283103242457261>"),
-            discord.SelectOption(label="Comprar", description="Abre ticket para comprar algún producto de la tienda.", emoji="<:boost_cherry:1488944553497989334>"),
-            discord.SelectOption(label="Reclamar", description="Abre ticket para solicitar tu recompensa.", emoji="<:regalo_cherrybox:1488944546510409911>"),
-            discord.SelectOption(label="Quejas", description="Abre ticket para reportar un problema o queja.", emoji="<:viperfinder_viperfinde_558:1489283055746027760>"),
+        options = [<:emoji_9:1550144328540618882
+            discord.SelectOption(label="Soporte", description="Abre ticket para resolver tus dudas o preguntas.", emoji= <:emoji_9:1550144328540618882>"
+            discord.SelectOption(label="Comprar", description="Abre ticket para comprar algún producto de la tienda.", emoji="<:emoji_11:1550144504990801930>"),
+            discord.SelectOption(label="Reclamar", description="Abre ticket para solicitar tu recompensa.", emoji="<:emoji_20:1550146329915949077>"),
+            discord.SelectOption(label="Quejas", description="Abre ticket para reportar un problema o queja.", emoji="<:emoji_10:1550144465765793792>"),
             discord.SelectOption(label="Media", description="Abre ticket para solicitar el rol Team Media.", emoji="<:Crown:1488947497278902312>"),
-            discord.SelectOption(label="Postulacion", description="Abre ticket para postularte a staff.", emoji="<:aprobado_cherrybox:1488944560775102544>")
+            discord.SelectOption(label="Postulacion", description="Abre ticket para postularte a staff.", emoji="<:emoji_14:1550144666618302525>")
         ]
         super().__init__(placeholder="Selecciona el tipo de ticket...", min_values=1, max_values=1, options=options)
 
@@ -90,10 +90,10 @@ async def panel(ctx):
         description=(
             "<:boost_cherry:1488944553497989334> **Usa los apartados según lo que necesites:**\n\n"
             "▫️ Para **comprar un artículo**, selecciona en el menú 💲\n"
-            "▫️ Para **recibir tu recompensa**, selecciona <:regalo_cherrybox:1488944546510409911>\n"
-            "▫️ Para **soporte / dudas**, selecciona <:md_mantenimiento:1489283103242457261>\n"
-            "▫️ Para **postularte**, selecciona <:aprobado_cherrybox:1488944560775102544>\n\n"
-            "<:viperfinder_viperfinde_558:1489283055746027760> **Normas:**\n"
+            "▫️ Para **recibir tu recompensa**, selecciona <:emoji_20:1550146329915949077>\n"
+            "▫️ Para **soporte / dudas**, selecciona <:emoji_9:1550144328540618882>\n"
+            "▫️ Para **postularte**, selecciona  <:emoji_11:1550144504990801930>\n\n"
+            "<:emoji_14:1550144666618302525> **Normas:**\n"
             "• El mal uso de este sistema será motivo de **sanción inmediata**.\n"
             "• Los tickets deben abrirse **solo por motivos válidos**.\n\n"
             "> `Recuerda ser claro y respetuoso en tu mensaje.`"
